@@ -22,14 +22,15 @@ function normalize(payload: unknown): Product[] {
     for (const key of ["value", "results", "items", "data"]) {
       if (Array.isArray(obj[key])) return obj[key] as Product[];
     }
-    if (typeof obj.body === "string") {
+    const body = obj["body"];
+    if (typeof body === "string") {
       try {
-        return normalize(JSON.parse(obj.body));
+        return normalize(JSON.parse(body));
       } catch {
         return [];
       }
     }
-    if (obj.body) return normalize(obj.body);
+    if (body) return normalize(body);
   }
   return [];
 }
