@@ -6,10 +6,26 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
+// Self-hosting: set SERVER_PRESET=node-server (see DEPLOY.md) to build a plain
+// Node.js server into .output/. Inside Lovable the preset is forced to Cloudflare.
+const serverPreset = process.env["SERVER_PRESET"];
+
 export default defineConfig({
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  ...(serverPreset
+    ? {
+        nitro: {
+          preset: serverPreset,
+          output: {
+            dir: ".output",
+            publicDir: ".output/public",
+            serverDir: ".output/server",
+          },
+        },
+      }
+    : {}),
 });
