@@ -6,6 +6,7 @@ import { ResultsDropdown } from "@/components/ResultsDropdown";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { searchProducts } from "@/lib/search-api";
 import type { Product } from "@/lib/products";
+import logo from "@/assets/logo.png";
 
 const TITLE = "Stock Finder — Product Search & Inventory Lookup";
 const DESCRIPTION =
