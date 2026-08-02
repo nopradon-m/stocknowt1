@@ -120,11 +120,20 @@ function Index() {
   return (
     <main className="min-h-screen bg-muted/40 pb-16">
       <div className="mx-auto w-full max-w-[480px] px-4">
-        <header className="pt-8 pb-4">
-          <h1 className="text-2xl font-black tracking-tight text-foreground">Stock Finder</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Look up products, prices and warehouse quantities.
-          </p>
+        <header className="flex items-center gap-3 pt-8 pb-4">
+          <img
+            src={logo}
+            alt="Stock Now company logo"
+            width={512}
+            height={512}
+            className="h-11 w-11 shrink-0 rounded-xl object-contain"
+          />
+          <div>
+            <h1 className="text-2xl font-black tracking-tight text-foreground">Stock Now</h1>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              Look up products, prices and warehouse quantities.
+            </p>
+          </div>
         </header>
 
         <div ref={containerRef} className="sticky top-0 z-20 -mx-4 bg-muted/40 px-4 py-3">
