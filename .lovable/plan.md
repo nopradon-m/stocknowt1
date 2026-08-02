@@ -1,19 +1,67 @@
-## Product Search & Inventory Lookup (mobile-first)
+## Important: this is not a plain Vite SPA
 
-A single-page app at `/` with a search box, live typeahead dropdown, and a detail card. No database — data comes from a placeholder Power Automate webhook, with mock data used as a fallback until the real URL is set.
+Your app is built with **TanStack Start** (React 19 + Vite 8 + Nitro), which is a full-stack SSR framework. `vite build` does **not** produce a plain static `dist/` folder — it produces a Nitro server bundle. So you do **not** need to write an Express server; Nitro already generates a production Node server for you. You just need to build with the Node preset instead of the default Cloudflare one.
 
-### Screens / behavior
-- Centered column, `max-w-[480px]`, generous touch targets, sticky search header.
-- Typing ≥1 character triggers a debounced (300ms) search; a small spinner shows inside the input's right edge while in flight.
-- Dropdown lists matches: product description (bold) plus MPN and brand as secondary line. Empty state ("No matches") and error state ("Couldn't reach the catalog — showing offline results").
-- Selecting a row closes the dropdown, fills the input with the product name, and renders the Product Card.
-- Product Card fields: ProductDesc (large/bold heading), brand badge, MPN, Price List2021 (currency-formatted), Lotsize, Quantity 01-ST, Quantity 01plus03. Quantities shown as two stat tiles; the rest as a labeled key/value list. Stock badge (In stock / Low / Out) derived from `01-ST`.
-- Click-outside and Escape close the dropdown; arrow keys + Enter navigate results.
+## What I'll change in the code
 
-### Technical details
-- `src/lib/products.ts` — `Product` type, the 3-row mock array, and a local filter helper (matches MPN, ProductDesc, Product No.).
-- `src/lib/search-api.ts` — `searchProducts(query, signal)` doing `fetch(WEBHOOK_URL, { method: 'POST', body: JSON.stringify({ searchQuery: query }) })`. Constant `WEBHOOK_URL = "YOUR_POWER_AUTOMATE_WEBHOOK_URL"` at the top with a comment explaining where to paste the real URL. When the URL is still the placeholder (or the request fails), it resolves with the filtered mock array after a short simulated delay, so the UI is fully usable now. Response normalization tolerates either a bare array or `{ value: [...] }`.
-- `src/hooks/use-debounced-value.ts` — 300ms debounce; in-flight requests aborted via `AbortController` so stale responses can't overwrite newer ones.
-- `src/routes/index.tsx` — replaces the placeholder index page; holds query/results/selected state and composes `SearchBar`, `ResultsDropdown`, `ProductCard` components under `src/components/`.
-- Styling with existing Tailwind v4 semantic tokens; add a small industrial-leaning accent palette + type scale to `src/styles.css` (no hardcoded color utilities).
-- Route `head()` with an app-specific title/description/og tags.
+1. **`vite.config.ts`** — allow the Nitro target to be chosen by env var so the Lovable preview keeps working (cloudflare) while your self-hosted build uses `node-server`:
+   ```ts
+   export default defineConfig({
+     tanstackStart: { server: { entry: "server" } },
+     nitro: { preset: process.env.SERVER_PRESET ?? undefined },
+   });
+   ```
+2. **`package.json`** — add a script:
+   ```json
+   "build:node": "SERVER_PRESET=node-server vite build"
+   ```
+3. **`app.js`** at the project root — the Passenger/PM2 startup file, a 3-line loader that boots the Nitro output:
+   ```js
+   import("./.output/server/index.mjs");
+   ```
+4. **`DEPLOY.md`** — the full Plesk walkthrough (summarized below).
+
+## Deployment steps you'll follow
+
+**On your machine or the server (Node 20+):**
+```bash
+npm install            # or bun install
+npm run build:node     # outputs .output/
+```
+
+**Upload** to your Plesk domain's document root (e.g. `/var/www/vhosts/example.com/httpdocs`):
+- `.output/` (entire folder)
+- `app.js`
+- `package.json` (optional, only for metadata — `.output` is self-contained)
+
+Alternatively install Node/npm on the server and run the build there via Plesk's Node.js panel ("NPM install" + "Run script: build:node").
+
+**In Plesk → Websites & Domains → Node.js:**
+- Node.js version: 20 or 22
+- Application root: your domain folder
+- Application startup file: `app.js`
+- Application mode: `production`
+- Custom env vars: `PORT` is supplied by Passenger automatically; add any app env vars here
+- Click **Enable Node.js** / **Restart App**
+
+Passenger reverse-proxies to the Node process, serves the app over your domain, and Nitro serves the hashed client assets from `.output/public` with correct caching.
+
+**PM2 alternative** (if you prefer it over Passenger):
+```bash
+PORT=3000 pm2 start .output/server/index.mjs --name stock-now
+pm2 save && pm2 startup
+```
+Then add an Apache/nginx reverse-proxy directive in Plesk (Apache & nginx Settings → Additional nginx directives):
+```
+location / { proxy_pass http://127.0.0.1:3000; proxy_set_header Host $host; }
+```
+
+## About Express
+
+Not needed. If you ever wanted a pure-static host (no Node), the app would have to be converted to a prerendered/SPA build first — that's a separate change. I can do that instead if you'd rather serve it as flat files from Apache/nginx with no Node process at all; just say the word.
+
+## Technical notes
+
+- Nitro `node-server` output is fully bundled — no `node_modules` needed at runtime.
+- `.output/server/index.mjs` is ESM, hence `app.js` uses dynamic `import()`.
+- The Power Automate webhook call happens client-side, so no server secrets are involved.
