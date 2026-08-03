@@ -90,7 +90,7 @@ function Index() {
   function select(product: Product) {
     skipNextSearch.current = true;
     setSelected(product);
-    setQuery(product.ProductDesc);
+    setQuery(product["Product Descriptions"] || product.MPN);
     setOpen(false);
   }
 
