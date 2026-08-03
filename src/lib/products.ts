@@ -1,22 +1,21 @@
 export interface Product {
   MPN: string;
-  "Product No.": string;
-  ProductDesc: string;
-  BrandName: string;
-  "Price List2021": number;
+  "Product Descriptions": string;
+  "Brand Name": string;
+  Price: number;
+  Lotsize: number | null;
   "01-ST": number;
-  "01plus03": number;
-  Lotsize: number;
 }
 
-
-export function formatPrice(value: number): string {
+export function formatPrice(value: number | null): string {
+  if (value === null || !Number.isFinite(value)) return "—";
   return new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(value);
 }
 
-export function formatQty(value: number): string {
+export function formatQty(value: number | null): string {
+  if (value === null || !Number.isFinite(value)) return "—";
   return new Intl.NumberFormat("en-US").format(value);
 }

@@ -35,7 +35,7 @@ export function ResultsDropdown({
       ) : (
         <ul>
           {results.map((product, i) => (
-            <li key={`${product.MPN}-${product["Product No."]}-${i}`}>
+            <li key={`${product.MPN}-${i}`}>
               <button
                 type="button"
                 role="option"
@@ -47,12 +47,14 @@ export function ResultsDropdown({
                   i === activeIndex ? "bg-accent" : "bg-transparent"
                 }`}
               >
-                <p className="line-clamp-2 text-sm font-bold leading-snug text-foreground">
-                  {product.ProductDesc || product.MPN}
+                <p className="break-all font-mono text-xs font-bold text-foreground">
+                  {product.MPN || "—"}
                 </p>
-                <p className="mt-1 font-mono text-xs text-muted-foreground">
-                  {product.MPN}
-                  {product.BrandName ? ` · ${product.BrandName}` : ""}
+                <p className="mt-1 line-clamp-2 text-sm font-semibold leading-snug text-foreground">
+                  {product["Product Descriptions"] || "—"}
+                </p>
+                <p className="mt-1 text-xs uppercase tracking-wide text-muted-foreground">
+                  {product["Brand Name"] || "Unbranded"}
                 </p>
               </button>
             </li>

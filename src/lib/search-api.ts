@@ -20,18 +20,24 @@ function toNumber(value: unknown): number {
   return 0;
 }
 
+function toNullableNumber(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  return toNumber(value);
+}
+
 function toProduct(raw: Record<string, unknown>): Product {
   return {
     MPN: String(raw["MPN"] ?? ""),
-    "Product No.": String(raw["Product No."] ?? raw["ProductNo"] ?? ""),
-    ProductDesc: String(raw["ProductDesc"] ?? raw["Product Description"] ?? ""),
-    BrandName: String(raw["BrandName"] ?? raw["Brand"] ?? ""),
-    "Price List2021": toNumber(raw["Price List2021"] ?? raw["Price"]),
+    "Product Descriptions": String(
+      raw["Product Descriptions"] ?? raw["ProductDesc"] ?? raw["Product Description"] ?? "",
+    ),
+    "Brand Name": String(raw["Brand Name"] ?? raw["BrandName"] ?? raw["Brand"] ?? ""),
+    Price: toNumber(raw["Price"] ?? raw["Price List2021"]),
+    Lotsize: toNullableNumber(raw["Lotsize"] ?? raw["Lot size"]),
     "01-ST": toNumber(raw["01-ST"]),
-    "01plus03": toNumber(raw["01plus03"]),
-    Lotsize: toNumber(raw["Lotsize"] ?? raw["Lot size"]),
   };
 }
+
 
 function normalize(payload: unknown): Product[] {
   if (Array.isArray(payload)) {
@@ -53,7 +59,9 @@ function normalize(payload: unknown): Product[] {
       }
     }
     if (body) return normalize(body);
-    if ("MPN" in obj || "ProductDesc" in obj) return [toProduct(obj)];
+    if ("MPN" in obj || "Product Descriptions" in obj || "ProductDesc" in obj)
+      return [toProduct(obj)];
+
   }
   return [];
 }
