@@ -35,20 +35,21 @@ export function ProductCard({ product }: { product: Product }) {
             {stock.label}
           </span>
         </div>
-        <h2 className="mt-3 break-words text-lg font-black leading-snug text-foreground">
-          {product["Product Descriptions"] || product.MPN}
+        <h2 className="mt-3 break-all font-mono text-xl font-black leading-snug text-foreground">
+          {product.MPN || "—"}
         </h2>
-        <p className="mt-1 break-all font-mono text-xs text-muted-foreground">
-          MPN {product.MPN || "—"}
+        <p className="mt-1 break-words text-xs text-muted-foreground">
+          <span className="font-semibold">Product Description : </span>
+          {product["Product Descriptions"] || "—"}
         </p>
       </div>
 
       <div className="p-5 pb-0">
-        <div className="rounded-xl border border-border bg-background p-3">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-            Qty 01-ST
+        <div className="rounded-xl border border-border bg-background p-4 text-center">
+          <p className="text-xl font-semibold uppercase tracking-wide text-muted-foreground">
+            Qty
           </p>
-          <p className="mt-1 text-2xl font-black tabular-nums text-foreground">
+          <p className="mt-1 text-4xl font-black tabular-nums text-foreground">
             {formatQty(product["01-ST"])}
           </p>
         </div>
