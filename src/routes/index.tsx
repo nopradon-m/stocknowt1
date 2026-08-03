@@ -8,6 +8,7 @@ import { searchProducts, SearchError } from "@/lib/search-api";
 import type { Product } from "@/lib/products";
 import logo from "@/assets/logo.png";
 
+const APP_VERSION = "0.1.100";
 const TITLE = "Stock Finder — Product Search & Inventory Lookup";
 const DESCRIPTION =
   "Search cables, conduit and electrical parts by MPN or description and see live price, lot size and warehouse quantities.";
@@ -201,7 +202,14 @@ function Index() {
             </div>
           )}
         </section>
+
+        <footer className="mt-10 border-t border-border pt-4 text-center">
+          <p className="text-xs text-muted-foreground">
+            Stock Now &middot; Version {APP_VERSION}
+          </p>
+        </footer>
       </div>
     </main>
+
   );
 }
