@@ -201,7 +201,14 @@ function Index() {
             </div>
           )}
         </section>
+
+        <footer className="mt-10 border-t border-border pt-4 text-center">
+          <p className="text-xs text-muted-foreground">
+            Stock Now &middot; Version {APP_VERSION}
+          </p>
+        </footer>
       </div>
     </main>
+
   );
 }
