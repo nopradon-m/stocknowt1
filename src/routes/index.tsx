@@ -56,6 +56,7 @@ function Index() {
     const controller = new AbortController();
     setLoading(true);
     setError(null);
+    setOpen(true);
 
     searchProducts(q, controller.signal)
       .then((res) => {
