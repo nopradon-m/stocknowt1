@@ -59,7 +59,9 @@ function normalize(payload: unknown): Product[] {
       }
     }
     if (body) return normalize(body);
-    if ("MPN" in obj || "ProductDesc" in obj) return [toProduct(obj)];
+    if ("MPN" in obj || "Product Descriptions" in obj || "ProductDesc" in obj)
+      return [toProduct(obj)];
+
   }
   return [];
 }

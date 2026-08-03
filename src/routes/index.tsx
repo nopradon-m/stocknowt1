@@ -45,7 +45,7 @@ function Index() {
       return;
     }
     const q = debounced.trim();
-    if (q.length < 1) {
+    if (q.length < 3) {
       setResults([]);
       setOpen(false);
       setLoading(false);
@@ -152,7 +152,7 @@ function Index() {
                 onChange={(e) => setQuery(e.target.value)}
                 onFocus={() => results.length > 0 && setOpen(true)}
                 onKeyDown={onKeyDown}
-                placeholder="Search by MPN or description"
+                placeholder="Search by MPN or description (min 3 characters)"
                 aria-label="Search products"
                 className="h-14 w-full rounded-2xl border border-border bg-card pl-11 pr-12 text-base text-foreground shadow-sm outline-none transition-shadow placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/30"
               />
