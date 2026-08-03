@@ -1,26 +1,48 @@
-import { MOCK_PRODUCTS, filterProducts, type Product } from "./products";
+import type { Product } from "./products";
 
-/**
- * Paste your Power Automate "When an HTTP request is received" URL here.
- * While this is left as the placeholder, the app falls back to mock data
- * so the UI stays fully usable.
- */
-export const WEBHOOK_URL = "YOUR_POWER_AUTOMATE_WEBHOOK_URL";
+/** Power Automate "When an HTTP request is received" endpoint. */
+export const WEBHOOK_URL =
+  "https://10a2a8f5b485efaa956dd35231ed91.91.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/20/workflows/54ef18283000473a84ebd81f4611dd21/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=DDKHd0ykkCsiU5oCiOLRhjgBzmv3pICnifVp02lENlA";
 
-const isConfigured = () => /^https?:\/\//i.test(WEBHOOK_URL);
+/** Abort the request if the flow takes longer than this. */
+const TIMEOUT_MS = 15000;
 
 export interface SearchResult {
   items: Product[];
-  /** True when results came from local mock data instead of the webhook. */
-  offline: boolean;
+}
+
+function toNumber(value: unknown): number {
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+  if (typeof value === "string") {
+    const n = Number(value.replace(/[^0-9.-]/g, ""));
+    return Number.isFinite(n) ? n : 0;
+  }
+  return 0;
+}
+
+function toProduct(raw: Record<string, unknown>): Product {
+  return {
+    MPN: String(raw["MPN"] ?? ""),
+    "Product No.": String(raw["Product No."] ?? raw["ProductNo"] ?? ""),
+    ProductDesc: String(raw["ProductDesc"] ?? raw["Product Description"] ?? ""),
+    BrandName: String(raw["BrandName"] ?? raw["Brand"] ?? ""),
+    "Price List2021": toNumber(raw["Price List2021"] ?? raw["Price"]),
+    "01-ST": toNumber(raw["01-ST"]),
+    "01plus03": toNumber(raw["01plus03"]),
+    Lotsize: toNumber(raw["Lotsize"] ?? raw["Lot size"]),
+  };
 }
 
 function normalize(payload: unknown): Product[] {
-  if (Array.isArray(payload)) return payload as Product[];
+  if (Array.isArray(payload)) {
+    return payload
+      .filter((row): row is Record<string, unknown> => !!row && typeof row === "object")
+      .map(toProduct);
+  }
   if (payload && typeof payload === "object") {
     const obj = payload as Record<string, unknown>;
-    for (const key of ["value", "results", "items", "data"]) {
-      if (Array.isArray(obj[key])) return obj[key] as Product[];
+    for (const key of ["value", "results", "items", "data", "products"]) {
+      if (Array.isArray(obj[key])) return normalize(obj[key]);
     }
     const body = obj["body"];
     if (typeof body === "string") {
@@ -31,41 +53,51 @@ function normalize(payload: unknown): Product[] {
       }
     }
     if (body) return normalize(body);
+    if ("MPN" in obj || "ProductDesc" in obj) return [toProduct(obj)];
   }
   return [];
 }
 
-const delay = (ms: number, signal?: AbortSignal) =>
-  new Promise<void>((resolve, reject) => {
-    const t = setTimeout(resolve, ms);
-    signal?.addEventListener("abort", () => {
-      clearTimeout(t);
-      reject(new DOMException("Aborted", "AbortError"));
-    });
-  });
+/** Thrown for any failure the user should see a friendly message about. */
+export class SearchError extends Error {}
 
 export async function searchProducts(
   query: string,
   signal?: AbortSignal,
 ): Promise<SearchResult> {
   const q = query.trim();
-  if (!q) return { items: [], offline: !isConfigured() };
+  if (!q) return { items: [] };
 
-  if (!isConfigured()) {
-    await delay(250, signal);
-    return { items: filterProducts(MOCK_PRODUCTS, q), offline: true };
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(new DOMException("Timeout", "TimeoutError")), TIMEOUT_MS);
+  signal?.addEventListener("abort", () => controller.abort(signal.reason));
+
+  let response: Response;
+  try {
+    response = await fetch(WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ searchQuery: q }),
+      signal: controller.signal,
+    });
+  } catch (err) {
+    clearTimeout(timer);
+    // Caller-initiated abort bubbles up untouched so it can be ignored.
+    if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+    if (err instanceof DOMException && err.name === "TimeoutError") {
+      throw new SearchError("The search timed out. Please try again.");
+    }
+    throw new SearchError("Unable to connect to the database.");
   }
-
-  const response = await fetch(WEBHOOK_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ searchQuery: q }),
-    signal: signal ?? null,
-  });
+  clearTimeout(timer);
 
   if (!response.ok) {
-    throw new Error(`Search failed (${response.status})`);
+    throw new SearchError(`Unable to connect to the database (error ${response.status}).`);
   }
 
-  return { items: normalize(await response.json()), offline: false };
+  try {
+    return { items: normalize(await response.json()) };
+  } catch {
+    throw new SearchError("Received an unexpected response from the database.");
+  }
 }
