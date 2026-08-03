@@ -9,9 +9,9 @@ function stockTone(qty: number) {
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-4 border-b border-border/60 py-3 last:border-b-0">
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <span className="text-right text-sm font-semibold tabular-nums text-foreground">
+    <div className="flex items-baseline justify-between gap-4 border-b border-border/60 py-3 last:border-b-0">
+      <span className="shrink-0 text-sm text-muted-foreground">{label}</span>
+      <span className="min-w-0 break-words text-right text-sm font-semibold tabular-nums text-foreground">
         {value}
       </span>
     </div>
@@ -25,9 +25,9 @@ export function ProductCard({ product }: { product: Product }) {
     <article className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
       <div className="border-b border-border bg-secondary/60 p-5">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-primary-foreground">
+          <span className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-primary px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-primary-foreground">
             <Package className="h-3 w-3 shrink-0" />
-            {product.BrandName}
+            <span className="truncate">{product.BrandName || "Unbranded"}</span>
           </span>
           <span
             className={`rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide ${stock.cls}`}
@@ -35,11 +35,11 @@ export function ProductCard({ product }: { product: Product }) {
             {stock.label}
           </span>
         </div>
-        <h2 className="mt-3 text-lg font-black leading-snug text-foreground">
-          {product.ProductDesc}
+        <h2 className="mt-3 break-words text-lg font-black leading-snug text-foreground">
+          {product.ProductDesc || product.MPN}
         </h2>
-        <p className="mt-1 font-mono text-xs text-muted-foreground">
-          MPN {product.MPN} · No. {product["Product No."]}
+        <p className="mt-1 break-all font-mono text-xs text-muted-foreground">
+          MPN {product.MPN || "—"} · No. {product["Product No."] || "—"}
         </p>
       </div>
 
@@ -63,7 +63,8 @@ export function ProductCard({ product }: { product: Product }) {
       </div>
 
       <div className="px-5 pb-4 pt-2">
-        <Row label="MPN" value={product.MPN} />
+        <Row label="MPN" value={product.MPN || "—"} />
+        <Row label="Brand" value={product.BrandName || "—"} />
         <Row label="Price (List 2021)" value={formatPrice(product["Price List2021"])} />
         <Row label="Lot size" value={formatQty(product.Lotsize)} />
       </div>
