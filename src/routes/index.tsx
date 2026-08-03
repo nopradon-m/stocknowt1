@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ProductCard } from "@/components/ProductCard";
 import { ResultsDropdown } from "@/components/ResultsDropdown";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
-import { searchProducts } from "@/lib/search-api";
+import { searchProducts, SearchError } from "@/lib/search-api";
 import type { Product } from "@/lib/products";
 import logo from "@/assets/logo.png";
 
@@ -56,6 +56,7 @@ function Index() {
     const controller = new AbortController();
     setLoading(true);
     setError(null);
+    setOpen(true);
 
     searchProducts(q, controller.signal)
       .then((res) => {
@@ -66,7 +67,9 @@ function Index() {
       .catch((err: unknown) => {
         if (err instanceof DOMException && err.name === "AbortError") return;
         setResults([]);
-        setError("Couldn't reach the catalog. Please try again.");
+        setError(
+          err instanceof SearchError ? err.message : "Unable to connect to the database.",
+        );
         setOpen(true);
       })
       .finally(() => {
