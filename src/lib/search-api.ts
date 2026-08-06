@@ -1,11 +1,11 @@
 import type { Product } from "./products";
 
-/** Power Automate "When an HTTP request is received" endpoint. */
-export const WEBHOOK_URL =
-  "https://10a2a8f5b485efaa956dd35231ed91.91.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/20/workflows/54ef18283000473a84ebd81f4611dd21/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=DDKHd0ykkCsiU5oCiOLRhjgBzmv3pICnifVp02lENlA";
+/** Same-origin proxy; the real Power Automate endpoint stays server-side. */
+export const SEARCH_ENDPOINT = "/api/search";
 
-/** Abort the request if the flow takes longer than this. */
-const TIMEOUT_MS = 15000;
+/** Abort the request if the proxy takes longer than this. */
+const TIMEOUT_MS = 20000;
+
 
 export interface SearchResult {
   items: Product[];
@@ -82,7 +82,7 @@ export async function searchProducts(
 
   let response: Response;
   try {
-    response = await fetch(WEBHOOK_URL, {
+    response = await fetch(SEARCH_ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ searchQuery: q }),
@@ -100,8 +100,16 @@ export async function searchProducts(
   clearTimeout(timer);
 
   if (!response.ok) {
-    throw new SearchError(`Unable to connect to the database (error ${response.status}).`);
+    let message = `Unable to connect to the database (error ${response.status}).`;
+    try {
+      const body = (await response.json()) as { error?: unknown };
+      if (typeof body.error === "string" && body.error) message = body.error;
+    } catch {
+      // keep the default message
+    }
+    throw new SearchError(message);
   }
+
 
   try {
     return { items: normalize(await response.json()) };
