@@ -82,7 +82,7 @@ export async function searchProducts(
 
   let response: Response;
   try {
-    response = await fetch(WEBHOOK_URL, {
+    response = await fetch(SEARCH_ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ searchQuery: q }),
@@ -100,8 +100,16 @@ export async function searchProducts(
   clearTimeout(timer);
 
   if (!response.ok) {
-    throw new SearchError(`Unable to connect to the database (error ${response.status}).`);
+    let message = `Unable to connect to the database (error ${response.status}).`;
+    try {
+      const body = (await response.json()) as { error?: unknown };
+      if (typeof body.error === "string" && body.error) message = body.error;
+    } catch {
+      // keep the default message
+    }
+    throw new SearchError(message);
   }
+
 
   try {
     return { items: normalize(await response.json()) };
