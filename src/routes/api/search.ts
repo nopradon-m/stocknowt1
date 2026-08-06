@@ -27,8 +27,12 @@ export const Route = createFileRoute("/api/search")({
           return Response.json({ error: "Invalid search query." }, { status: 400 });
         }
 
-        const headers: Record<string, string> = { "Content-Type": "application/json" };
-        if (apiKey) headers["x-api-key"] = apiKey;
+        // Always sent; the flow checks this header in a Condition step.
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey ?? "",
+        };
+
 
         try {
           const upstream = await fetch(webhookUrl, {
