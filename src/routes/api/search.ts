@@ -3,6 +3,40 @@ import { createFileRoute } from "@tanstack/react-router";
 /** Abort the upstream call if the flow takes longer than this. */
 const UPSTREAM_TIMEOUT_MS = 15000;
 
+/** How long a cached search result stays fresh. */
+const CACHE_TTL_MS = 5 * 60 * 1000;
+/** Keep the in-memory cache bounded. */
+const CACHE_MAX_ENTRIES = 500;
+
+type CacheEntry = { payload: unknown; timestamp: number };
+const searchCache = new Map<string, CacheEntry>();
+
+const cacheKey = (query: string) => query.trim().toLowerCase();
+
+function readCache(key: string): unknown | undefined {
+  const hit = searchCache.get(key);
+  if (!hit) return undefined;
+  if (Date.now() - hit.timestamp > CACHE_TTL_MS) {
+    searchCache.delete(key);
+    return undefined;
+  }
+  return hit.payload;
+}
+
+function writeCache(key: string, payload: unknown) {
+  searchCache.set(key, { payload, timestamp: Date.now() });
+  // Evict expired entries, then the oldest ones if still over the limit.
+  const now = Date.now();
+  for (const [k, v] of searchCache) {
+    if (now - v.timestamp > CACHE_TTL_MS) searchCache.delete(k);
+  }
+  while (searchCache.size > CACHE_MAX_ENTRIES) {
+    const oldest = searchCache.keys().next().value;
+    if (oldest === undefined) break;
+    searchCache.delete(oldest);
+  }
+}
+
 export const Route = createFileRoute("/api/search")({
   server: {
     handlers: {
@@ -25,6 +59,12 @@ export const Route = createFileRoute("/api/search")({
 
         if (searchQuery.length < 3 || searchQuery.length > 200) {
           return Response.json({ error: "Invalid search query." }, { status: 400 });
+        }
+
+        const key = cacheKey(searchQuery);
+        const cached = readCache(key);
+        if (cached !== undefined) {
+          return Response.json(cached, { headers: { "x-cache": "HIT" } });
         }
 
         // Always sent; the flow checks this header in a Condition step.
@@ -60,7 +100,8 @@ export const Route = createFileRoute("/api/search")({
               { status: 502 },
             );
           }
-          return Response.json(payload);
+          writeCache(key, payload);
+          return Response.json(payload, { headers: { "x-cache": "MISS" } });
         } catch (error) {
           const timedOut = error instanceof DOMException && error.name === "TimeoutError";
           console.error("Search upstream error:", error);
