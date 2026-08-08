@@ -110,10 +110,27 @@ export async function searchProducts(
     throw new SearchError(message);
   }
 
+try {
+    const rawData = await response.json();
+    let extractedArray = [];
 
-  try {
-    return { items: normalize(await response.json()) };
-  } catch {
+    // 1. ดักจับและแกะ Array ออกมาจากโครงสร้างของ Power Automate
+    if (Array.isArray(rawData)) {
+      extractedArray = rawData;
+    } else if (rawData && typeof rawData === 'object') {
+      // Power Automate มักจะเก็บข้อมูลไว้ใน property ที่ชื่อว่า value, data หรือ results
+      extractedArray = rawData.value || rawData.data || rawData.results || rawData.items || [];
+    }
+
+    // 2. ถ้าในไฟล์มีการบังคับใช้ฟังก์ชัน normalize ให้ครอบไว้เหมือนเดิม 
+    // (แต่ถ้าโค้ดแดงที่คำว่า normalize ให้ลบคำว่า normalize() ออกได้เลยครับ)
+    const finalItems = typeof normalize === 'function' ? normalize(extractedArray) : extractedArray;
+
+    // 3. ส่งข้อมูลกลับไปให้หน้าเว็บ (index.tsx) ในโครงสร้างเดิมที่มันคาดหวัง
+    return { items: finalItems };
+
+  } catch (err) {
+    console.error("Parse Error:", err);
     throw new SearchError("Received an unexpected response from the database.");
   }
 }
