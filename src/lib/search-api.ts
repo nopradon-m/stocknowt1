@@ -110,14 +110,10 @@ export async function searchProducts(
     throw new SearchError(message);
   }
 
-try {
-    const rawData = await response.json();
-    
-    // แอบดูข้อมูลดิบที่ Power Automate ส่งมาก่อนถูก normalize
-    console.log("🕵️‍♂️ RAW DATA FROM API:", rawData);
-    
-    return { items: normalize(rawData) };
+ try {
+    return { items: normalize(await response.json()) };
   } catch {
     throw new SearchError("Received an unexpected response from the database.");
   }
-}
+} 
+
