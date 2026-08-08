@@ -36,7 +36,7 @@ function Index() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [selected, setSelected] = useState<Product | null>(null);
 
-  const debounced = useDebouncedValue(query, 300);
+  const debounced = useDebouncedValue(query, 1000);
   const skipNextSearch = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
