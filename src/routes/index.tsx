@@ -35,9 +35,12 @@ function Index() {
   const [error, setError] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [selected, setSelected] = useState<Product | null>(null);
+  const [lastSearchedQuery, setLastSearchedQuery] = useState("");
 
-  const debounced = useDebouncedValue(query, 1000);
+  const debouncedQuery = useDebouncedValue(query, 1000);
   const skipNextSearch = useRef(false);
+  const searchIdRef = useRef(0);
+  const pendingQueryRef = useRef("");
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -45,28 +48,59 @@ function Index() {
       skipNextSearch.current = false;
       return;
     }
-    const q = debounced.trim();
-    if (q.length < 3) {
+
+    const current = query.trim();
+    const debounced = debouncedQuery.trim();
+
+    if (current.length < 3) {
       setResults([]);
       setOpen(false);
       setLoading(false);
       setError(null);
+      setLastSearchedQuery("");
+      pendingQueryRef.current = "";
+      return;
+    }
+
+    let searchQuery: string | null = null;
+
+    if (current.length === 3) {
+      if (current !== lastSearchedQuery && current !== pendingQueryRef.current) {
+        searchQuery = current;
+      }
+    } else if (current.length > 3) {
+      if (
+        debounced === current &&
+        current !== lastSearchedQuery &&
+        current !== pendingQueryRef.current
+      ) {
+        searchQuery = current;
+      }
+    }
+
+    if (!searchQuery) {
+      setLoading(false);
       return;
     }
 
     const controller = new AbortController();
+    const thisSearchId = ++searchIdRef.current;
+    pendingQueryRef.current = searchQuery;
     setLoading(true);
     setError(null);
     setOpen(true);
 
-    searchProducts(q, controller.signal)
+    searchProducts(searchQuery, controller.signal)
       .then((res) => {
+        if (searchIdRef.current !== thisSearchId) return;
         setResults(res.items);
         setActiveIndex(0);
         setOpen(true);
+        setLastSearchedQuery(searchQuery);
       })
       .catch((err: unknown) => {
-        if (err instanceof DOMException && err.name === "AbortError") return;
+        if (controller.signal.aborted) return;
+        if (searchIdRef.current !== thisSearchId) return;
         setResults([]);
         setError(
           err instanceof SearchError ? err.message : "Unable to connect to the database.",
@@ -74,11 +108,13 @@ function Index() {
         setOpen(true);
       })
       .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
+        if (searchIdRef.current !== thisSearchId) return;
+        setLoading(false);
+        pendingQueryRef.current = "";
       });
 
     return () => controller.abort();
-  }, [debounced]);
+  }, [query, debouncedQuery, lastSearchedQuery]);
 
   useEffect(() => {
     function onPointerDown(e: MouseEvent) {
