@@ -38,7 +38,7 @@ function Index() {
   const [lastSearchedQuery, setLastSearchedQuery] = useState("");
 
   const debouncedQuery = useDebouncedValue(query, 1000);
-  const skipNextSearch = useRef(false);
+  const skipQueryRef = useRef<string | null>(null);
   const searchIdRef = useRef(0);
   const pendingQueryRef = useRef("");
   const abortRef = useRef<AbortController | null>(null);
@@ -49,10 +49,11 @@ function Index() {
   }, []);
 
   useEffect(() => {
-    if (skipNextSearch.current) {
-      skipNextSearch.current = false;
+    if (skipQueryRef.current !== null && query === skipQueryRef.current) {
       return;
     }
+    skipQueryRef.current = null;
+
 
     const current = query.trim();
     const debounced = debouncedQuery.trim();
@@ -137,11 +138,18 @@ function Index() {
   }, []);
 
   function select(product: Product) {
-    skipNextSearch.current = true;
+    abortRef.current?.abort();
+    abortRef.current = null;
+    searchIdRef.current++;
+    pendingQueryRef.current = "";
+    skipQueryRef.current = product.MPN;
     setSelected(product);
     setQuery(product.MPN);
+    setLastSearchedQuery(product.MPN);
+    setLoading(false);
     setOpen(false);
   }
+
 
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "Escape") {
