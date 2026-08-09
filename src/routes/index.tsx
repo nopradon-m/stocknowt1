@@ -41,7 +41,12 @@ function Index() {
   const skipNextSearch = useRef(false);
   const searchIdRef = useRef(0);
   const pendingQueryRef = useRef("");
+  const abortRef = useRef<AbortController | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    return () => abortRef.current?.abort();
+  }, []);
 
   useEffect(() => {
     if (skipNextSearch.current) {
@@ -53,6 +58,9 @@ function Index() {
     const debounced = debouncedQuery.trim();
 
     if (current.length < 3) {
+      abortRef.current?.abort();
+      abortRef.current = null;
+      searchIdRef.current++;
       setResults([]);
       setOpen(false);
       setLoading(false);
@@ -79,11 +87,15 @@ function Index() {
     }
 
     if (!searchQuery) {
-      setLoading(false);
+      // Nothing new to search: never touch the in-flight request here.
+      if (!pendingQueryRef.current) setLoading(false);
       return;
     }
 
+    // Only a genuinely newer search cancels the previous one.
+    abortRef.current?.abort();
     const controller = new AbortController();
+    abortRef.current = controller;
     const thisSearchId = ++searchIdRef.current;
     pendingQueryRef.current = searchQuery;
     setLoading(true);
@@ -108,13 +120,13 @@ function Index() {
         setOpen(true);
       })
       .finally(() => {
+        if (pendingQueryRef.current === searchQuery) pendingQueryRef.current = "";
         if (searchIdRef.current !== thisSearchId) return;
+        if (abortRef.current === controller) abortRef.current = null;
         setLoading(false);
-        pendingQueryRef.current = "";
       });
-
-    return () => controller.abort();
   }, [query, debouncedQuery, lastSearchedQuery]);
+
 
   useEffect(() => {
     function onPointerDown(e: MouseEvent) {
