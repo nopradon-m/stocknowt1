@@ -171,7 +171,7 @@ function Index() {
   }
 
   function clear() {
-    skipNextSearch.current = false;
+    skipQueryRef.current = null;
     setQuery("");
     setSelected(null);
     setResults([]);
