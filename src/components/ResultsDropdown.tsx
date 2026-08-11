@@ -49,10 +49,10 @@ export function ResultsDropdown({
                   i === activeIndex ? "bg-accent" : "bg-transparent"
                 }`}
               >
-                <p className="break-all font-mono text-xs font-bold text-foreground">
+                <p className="break-all font-mono text-lg font-bold text-foreground">
                   {product.MPN || "—"}
                 </p>
-                <p className="mt-1 line-clamp-2 text-sm font-semibold leading-snug text-foreground">
+                <p className="mt-1 line-clamp-2 text-sm leading-snug text-muted-foreground">
                   {product["Product Descriptions"] || "—"}
                 </p>
                 <p className="mt-1 text-xs uppercase tracking-wide text-muted-foreground">

@@ -10,11 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiLogSelectionRouteImport } from './routes/api/log-selection'
 import { Route as ApiSearchRouteImport } from './routes/api/search'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiLogSelectionRoute = ApiLogSelectionRouteImport.update({
+  id: '/api/log-selection',
+  path: '/api/log-selection',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiSearchRoute = ApiSearchRouteImport.update({
@@ -25,27 +31,31 @@ const ApiSearchRoute = ApiSearchRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/log-selection': typeof ApiLogSelectionRoute
   '/api/search': typeof ApiSearchRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/log-selection': typeof ApiLogSelectionRoute
   '/api/search': typeof ApiSearchRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/log-selection': typeof ApiLogSelectionRoute
   '/api/search': typeof ApiSearchRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/search'
+  fullPaths: '/' | '/api/log-selection' | '/api/search'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/search'
-  id: '__root__' | '/' | '/api/search'
+  to: '/' | '/api/log-selection' | '/api/search'
+  id: '__root__' | '/' | '/api/log-selection' | '/api/search'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiLogSelectionRoute: typeof ApiLogSelectionRoute
   ApiSearchRoute: typeof ApiSearchRoute
 }
 
@@ -56,6 +66,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/log-selection': {
+      id: '/api/log-selection'
+      path: '/api/log-selection'
+      fullPath: '/api/log-selection'
+      preLoaderRoute: typeof ApiLogSelectionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/search': {
@@ -70,6 +87,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiLogSelectionRoute: ApiLogSelectionRoute,
   ApiSearchRoute: ApiSearchRoute,
 }
 export const routeTree = rootRouteImport
