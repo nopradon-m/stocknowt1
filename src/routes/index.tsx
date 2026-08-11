@@ -137,6 +137,19 @@ function Index() {
     return () => document.removeEventListener("mousedown", onPointerDown);
   }, []);
 
+  function logSelection(product: Product) {
+    try {
+      void fetch("/api/log-selection", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mpn: product.MPN, qty: product["01-ST"] ?? 0 }),
+        keepalive: true,
+      }).catch(() => {});
+    } catch {
+      // ignore logging failures
+    }
+  }
+
   function select(product: Product) {
     abortRef.current?.abort();
     abortRef.current = null;
@@ -148,6 +161,7 @@ function Index() {
     setLastSearchedQuery(product.MPN);
     setLoading(false);
     setOpen(false);
+    logSelection(product);
   }
 
 

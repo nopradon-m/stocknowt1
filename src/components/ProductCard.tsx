@@ -3,7 +3,6 @@ import { formatPrice, formatQty, type Product } from "@/lib/products";
 
 function stockTone(qty: number) {
   if (qty <= 0) return { label: "Out of stock", cls: "bg-destructive/10 text-destructive" };
-  if (qty < 50) return { label: "Low stock", cls: "bg-warning/15 text-warning-foreground" };
   return { label: "In stock", cls: "bg-success/15 text-success-foreground" };
 }
 
@@ -39,7 +38,6 @@ export function ProductCard({ product }: { product: Product }) {
           {product.MPN || "—"}
         </h2>
         <p className="mt-1 break-words text-xs text-muted-foreground">
-          <span className="font-semibold">Product Description : </span>
           {product["Product Descriptions"] || "—"}
         </p>
       </div>
@@ -58,7 +56,7 @@ export function ProductCard({ product }: { product: Product }) {
       <div className="px-5 pb-4 pt-2">
         <Row label="MPN" value={product.MPN || "—"} />
         <Row label="Brand Name" value={product["Brand Name"] || "—"} />
-        <Row label="Price" value={formatPrice(product.Price)} />
+        <Row label="Price List" value={formatPrice(product.Price)} />
         <Row label="Lot size" value={formatQty(product.Lotsize)} />
       </div>
     </article>

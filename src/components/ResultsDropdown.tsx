@@ -31,7 +31,9 @@ export function ResultsDropdown({
       ) : error ? (
         <p className="px-4 py-5 text-center text-sm font-medium text-destructive">{error}</p>
       ) : results.length === 0 ? (
-        <p className="px-4 py-5 text-center text-sm text-muted-foreground">No products found</p>
+        <p className="px-4 py-5 text-center text-sm text-muted-foreground">
+          ไม่มีในระบบ กรุณาติดต่อฝ่ายขาย
+        </p>
       ) : (
         <ul>
           {results.map((product, i) => (
@@ -47,10 +49,10 @@ export function ResultsDropdown({
                   i === activeIndex ? "bg-accent" : "bg-transparent"
                 }`}
               >
-                <p className="break-all font-mono text-xs font-bold text-foreground">
+                <p className="break-all font-mono text-lg font-bold text-foreground">
                   {product.MPN || "—"}
                 </p>
-                <p className="mt-1 line-clamp-2 text-sm font-semibold leading-snug text-foreground">
+                <p className="mt-1 line-clamp-2 text-sm leading-snug text-muted-foreground">
                   {product["Product Descriptions"] || "—"}
                 </p>
                 <p className="mt-1 text-xs uppercase tracking-wide text-muted-foreground">
