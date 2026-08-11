@@ -3,7 +3,6 @@ import { formatPrice, formatQty, type Product } from "@/lib/products";
 
 function stockTone(qty: number) {
   if (qty <= 0) return { label: "Out of stock", cls: "bg-destructive/10 text-destructive" };
-  if (qty < 50) return { label: "Low stock", cls: "bg-warning/15 text-warning-foreground" };
   return { label: "In stock", cls: "bg-success/15 text-success-foreground" };
 }
 

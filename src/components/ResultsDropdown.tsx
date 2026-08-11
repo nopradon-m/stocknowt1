@@ -31,7 +31,9 @@ export function ResultsDropdown({
       ) : error ? (
         <p className="px-4 py-5 text-center text-sm font-medium text-destructive">{error}</p>
       ) : results.length === 0 ? (
-        <p className="px-4 py-5 text-center text-sm text-muted-foreground">No products found</p>
+        <p className="px-4 py-5 text-center text-sm text-muted-foreground">
+          ไม่มีในระบบ กรุณาติดต่อฝ่ายขาย
+        </p>
       ) : (
         <ul>
           {results.map((product, i) => (
