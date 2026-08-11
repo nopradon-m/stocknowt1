@@ -8,7 +8,7 @@ import { searchProducts, SearchError } from "@/lib/search-api";
 import type { Product } from "@/lib/products";
 import logo from "@/assets/logo.png";
 
-const APP_VERSION = "0.1.100";
+const APP_VERSION = "0.2.000";
 const TITLE = "Stock Finder — Product Search & Inventory Lookup";
 const DESCRIPTION =
   "Search cables, conduit and electrical parts by MPN or description and see live price, lot size and warehouse quantities.";
